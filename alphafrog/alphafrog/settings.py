@@ -12,6 +12,17 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+import json
+from django.core.exceptions import ImproperlyConfigured
+
+def get_secrets(setting):
+    with open('settings.json') as f:
+        secrets = json.loads(f.read())
+    try:
+        return secrets[setting]
+    except KeyError:
+        error_msg = "Set the {0} environment variable".format(setting)
+        raise ImproperlyConfigured(error_msg)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -78,11 +89,11 @@ WSGI_APPLICATION = "alphafrog.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'frog-trade',
-        'USER': 'postgres',
-        'PASSWORD': os.getenv('DATABASE_PASSWORD'),
-        'HOST': 'localhost',  # 或者你数据库服务器的 IP 地址
-        'PORT': '5432',
+        'NAME': get_secrets('sql')[0]['db_name'],
+        'USER': get_secrets('sql')[0]['user'],
+        'PASSWORD': get_secrets('sql')[0]['password'],
+        'HOST': get_secrets('sql')[0]['host'],
+        'PORT': get_secrets('sql')[0]['port'],
     }
 }
 
