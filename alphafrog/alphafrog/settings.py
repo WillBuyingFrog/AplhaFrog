@@ -138,3 +138,8 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# AlphaFrog custom settings
+
+TUSHARE_TOKEN = get_secrets('tushare.token')

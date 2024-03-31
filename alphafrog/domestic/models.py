@@ -86,4 +86,3 @@ class IndexInfo(models.Model):
         verbose_name = '指数基本信息'
         verbose_name_plural = '指数基本信息'
 
-
