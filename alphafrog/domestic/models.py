@@ -36,6 +36,8 @@ class StockDaily(models.Model):
 
     class Meta:
         unique_together = (('ts_code', 'trade_date'),)
+
+        
 class IndexComponentWeight(models.Model):
     index_code = models.CharField(max_length=20)
     con_code = models.CharField(max_length=20)
