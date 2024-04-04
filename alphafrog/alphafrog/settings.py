@@ -15,11 +15,14 @@ import os
 import json
 from django.core.exceptions import ImproperlyConfigured
 
-def get_secrets(setting):
+def get_secrets(setting, index=0):
     with open('settings.json') as f:
         secrets = json.loads(f.read())
     try:
-        return secrets[setting]
+        if setting == 'sql' or setting == 'redis':
+            return secrets[setting][index]
+        else:
+            return secrets[setting]
     except KeyError:
         error_msg = "Set the {0} environment variable".format(setting)
         raise ImproperlyConfigured(error_msg)
@@ -86,14 +89,16 @@ WSGI_APPLICATION = "alphafrog.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+ALPHAFROG_DATABASE_INDEX = 1
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': get_secrets('sql')[0]['db_name'],
-        'USER': get_secrets('sql')[0]['user'],
-        'PASSWORD': get_secrets('sql')[0]['password'],
-        'HOST': get_secrets('sql')[0]['host'],
-        'PORT': get_secrets('sql')[0]['port'],
+        'NAME': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['db_name'],
+        'USER': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['user'],
+        'PASSWORD': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['password'],
+        'HOST': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['host'],
+        'PORT': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['port'],
     }
 }
 
@@ -138,6 +143,17 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# Celery Settings
+
+
+CELERY_BROKER_HOST = get_secrets('redis', index=0)['host']
+CELERY_BROKER_PORT = get_secrets('redis', index=0)['port']
+CELERY_BROKER_URL = f"redis://{CELERY_BROKER_HOST}:{CELERY_BROKER_PORT}/0"
+CELERY_RESULT_BACKEND = f"redis://{CELERY_BROKER_HOST}:{CELERY_BROKER_PORT}/0"
+CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}  # 可选，设置消息可见性超时时间
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 
 # AlphaFrog custom settings
