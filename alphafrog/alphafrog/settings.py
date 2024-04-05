@@ -150,8 +150,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 CELERY_BRK_HOST = get_secrets('redis', index=0)['host']
 CELERY_BRK_PORT = get_secrets('redis', index=0)['port']
-CELERY_BROKER_URL = f"redis://{CELERY_BRK_HOST}:{CELERY_BRK_PORT}/0"
-CELERY_RESULT_BACKEND = f"redis://{CELERY_BRK_HOST}:{CELERY_BRK_PORT}/1"
+CELERY_BRK_PASS = get_secrets('redis', index=0)['password']
+CELERY_BROKER_URL = f"redis://:{CELERY_BRK_PASS}@{CELERY_BRK_HOST}:{CELERY_BRK_PORT}/0"
+CELERY_RESULT_BACKEND = f"redis://:{CELERY_BRK_PASS}@{CELERY_BRK_HOST}:{CELERY_BRK_PORT}/1"
 CELERY_BROKER_TRANSPORT_OPTIONS = {'visibility_timeout': 3600}  # 可选，设置消息可见性超时时间
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
