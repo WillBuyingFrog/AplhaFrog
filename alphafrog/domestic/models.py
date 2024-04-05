@@ -37,37 +37,10 @@ class StockDaily(models.Model):
     class Meta:
         unique_together = (('ts_code', 'trade_date'),)
 
-        
-class IndexComponentWeight(models.Model):
-    index_code = models.CharField(max_length=20)
-    con_code = models.CharField(max_length=20)
-    trade_date = models.DateField()
-    weight = models.FloatField()
 
-    class Meta:
-        unique_together = (('index_code', 'con_code', 'trade_date'),)
-        verbose_name = '指数成分股权重'
-        verbose_name_plural = '指数成分股权重'
-
-
-class IndexDaily(models.Model):
-    ts_code = models.CharField(max_length=20, primary_key=True)
-    trade_date = models.DateField()
-    close = models.FloatField()
-    open = models.FloatField()
-    high = models.FloatField()
-    low = models.FloatField()
-    pre_close = models.FloatField(null=True, blank=True)
-    change = models.FloatField(null=True, blank=True)
-    pct_chg = models.FloatField(null=True, blank=True)
-    vol = models.FloatField(null=True, blank=True)
-    amount = models.FloatField(null=True, blank=True)
-
-    class Meta:
-        unique_together = (('ts_code', 'trade_date'),)
-        verbose_name = '指数日线行情'
-        verbose_name_plural = '指数日线行情'
-
+# ------
+# 指数相关实例
+# ------
 
 class IndexInfo(models.Model):
     ts_code = models.CharField(max_length=20, primary_key=True)
@@ -88,3 +61,33 @@ class IndexInfo(models.Model):
         verbose_name = '指数基本信息'
         verbose_name_plural = '指数基本信息'
 
+
+class IndexDaily(models.Model):
+    ts_code = models.CharField(max_length=20)
+    trade_date = models.DateField()
+    close = models.FloatField()
+    open = models.FloatField()
+    high = models.FloatField()
+    low = models.FloatField()
+    pre_close = models.FloatField(null=True, blank=True)
+    change = models.FloatField(null=True, blank=True)
+    pct_chg = models.FloatField(null=True, blank=True)
+    vol = models.FloatField(null=True, blank=True)
+    amount = models.FloatField(null=True, blank=True)
+
+    class Meta:
+        unique_together = (('ts_code', 'trade_date'),)
+        verbose_name = '指数日线行情'
+        verbose_name_plural = '指数日线行情'
+
+                
+class IndexComponentWeight(models.Model):
+    index_code = models.CharField(max_length=20)
+    con_code = models.CharField(max_length=20)
+    trade_date = models.DateField()
+    weight = models.FloatField()
+
+    class Meta:
+        unique_together = (('index_code', 'con_code', 'trade_date'),)
+        verbose_name = '指数成分股权重'
+        verbose_name_plural = '指数成分股权重'

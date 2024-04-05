@@ -13,6 +13,10 @@ app = Celery('alphafrog')
 #   should have a `CELERY_` prefix.
 app.config_from_object('django.conf:settings', namespace='CELERY')
 
-from domestic import index_tasks
+# 显式包含任务模块
+task_modules = [
+    'domestic.tasks.index_tasks',
+]
+
 # Load task modules from all registered Django apps.
-app.autodiscover_tasks()
+app.autodiscover_tasks(lambda: task_modules, related_name=None)
