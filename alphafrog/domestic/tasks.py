@@ -45,6 +45,10 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     if objects_to_insert:
         # print(f'{counter + len(objects_to_insert)}/{total}')
         IndexComponentWeight.objects.bulk_create(objects_to_insert)
-    
-    self.update_state(state='PROGRESS', meta={'progress': 'complete'})
+
+    final_result = {
+        'meta': {'output', f"Task complete, total {total} records inserted."}
+    }
+    self.update_state(state='SUCCESS', meta={'progress': 'complete'})
+    return final_result
 
