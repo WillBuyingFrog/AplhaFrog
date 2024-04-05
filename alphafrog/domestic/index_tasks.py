@@ -6,8 +6,6 @@ from django.conf import settings
 import tushare as ts
 from datetime import datetime
 
-from domestic.models import IndexComponentWeight
-
 
 @shared_task(bind=True)
 def get_index_components_and_weights(self, index_code, start_date, end_date):
@@ -22,6 +20,7 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     objects_to_insert = []
     counter = 0
     # print(df)
+    from domestic.models import IndexComponentWeight
 
     for index, row in df.iterrows():
         trade_date_str = row['trade_date']
@@ -49,6 +48,6 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     final_result = {
         'meta': {'output', f"Task complete, total {total} records inserted."}
     }
-    self.update_state(state='SUCCESS', meta={'progress': 'complete'})
+    self.update_state(state='SUCCESS', meta={'progress': f"Task complete, total {total} records inserted."})
     return final_result
 

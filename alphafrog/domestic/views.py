@@ -8,7 +8,7 @@ import tushare as ts
 import json
 from datetime import datetime
 
-from .tasks import get_index_components_and_weights
+from .index_tasks import get_index_components_and_weights
 
 from domestic.models import IndexComponentWeight
 
