@@ -10,8 +10,23 @@ from datetime import datetime
 
 from ..tasks.index_tasks import get_index_components_and_weights
 from ..tasks.index_tasks import get_index_daily
+from ..tasks.index_tasks import get_index_info
 
 from domestic.models import IndexComponentWeight
+
+
+@csrf_exempt
+def fetch_index_info(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ts_code = data.get('ts_code')
+        name = data.get('name')
+
+        task = get_index_info.delay(ts_code, name)
+
+        return JsonResponse({'task_id': task.id, 'message': 'success'}, status=200)
+    else:
+        return JsonResponse({'message': 'Invalid request'}, status=400)
 
 
 @csrf_exempt

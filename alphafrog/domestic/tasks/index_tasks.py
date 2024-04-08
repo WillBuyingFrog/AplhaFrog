@@ -57,49 +57,69 @@ def get_index_info(self, ts_code, name):
     
     ts.set_token(settings.TUSHARE_TOKEN)
     pro = ts.pro_api()
-    df = pro.index_basic(ts_code=ts_code, name=name)
+
+    # 优先使用ts_code搜索
+    if ts_code is not None:
+        df = pro.index_basic(ts_code=ts_code, name=name,
+                            fields='ts_code,name,fullname,market,publisher,index_type,category,base_date,base_point,list_date,weight_rule,desc,exp_date')
+        # 看有没有找到，如果没有再用name搜
+        if df.empty:
+            df = pro.index_basic(name=name,
+                                fields='ts_code,name,fullname,market,publisher,index_type,category,base_date,base_point,list_date,weight_rule,desc,exp_date')
+            # 如果还是没有，就直接返回
+            if df.empty:
+                final_result = {
+                    'progress': f"Task complete, no index found for {ts_code} or {name}.",
+                    'code': -1
+                }
+                self.update_state(state='SUCCESS', meta=final_result)
+                return final_result
+    else:
+        # 没有传入ts_code，直接用name搜
+        df = pro.index_basic(name=name,
+                            fields='ts_code,name,fullname,market,publisher,index_type,category,base_date,base_point,list_date,weight_rule,desc,exp_date')
+        if df.empty:
+            final_result = {
+                'progress': f"Task complete, no index found for {name}.",
+                'code': -1
+            }
+            self.update_state(state='SUCCESS', meta=final_result)
+            return final_result       
 
     from domestic.models import IndexInfo
 
-    # 先查找有没有ts_code或者fullname相同的记录，如果有就直接返回
-    obj = IndexInfo.objects.filter(ts_code=df['ts_code'][0]).first()
-    if obj:
-        final_result = {
-            'progress': f"Task complete, index ts_code {df['ts_code'][0]} already exists.",
-            'code': -1
-        }
-        self.update_state(state='SUCCESS', meta=final_result)
-        return final_result
-    
-    obj = IndexInfo.objects.filter(fullname=df['fullname'][0]).first()
-    if obj:
-        final_result = {
-            'progress': f"Task complete, index fullname {df['fullname'][0]} already exists.",
-            'code': -1
-        }
-        self.update_state(state='SUCCESS', meta=final_result)
-        return final_result
+    # print(df)
 
-    obj = IndexInfo(
-        ts_code=df['ts_code'][0],
-        name=df['name'][0],
-        fullname=df['fullname'][0],
-        market=df['market'][0],
-        publisher=df['publisher'][0],
-        index_type=df['index_type'][0],
-        category=df['category'][0],
-        base_date=datetime.strptime(df['base_date'][0], '%Y%m%d').date(),
-        base_point=df['base_point'][0],
-        list_date=datetime.strptime(df['list_date'][0], '%Y%m%d').date(),
-        weight_rule=df['weight_rule'][0],
-        desc=df['desc'][0],
-        exp_date=datetime.strptime(df['exp_date'][0], '%Y%m%d').date() if df['exp_date'][0] else None
-    )
+    counter = 0
+    for index, row in df.iterrows():
 
-    obj.save()
-    
+        if row['exp_date'] is not None:
+            row['exp_date'] = datetime.strptime(row['exp_date'], '%Y%m%d').date()
+
+        obj = IndexInfo(
+            ts_code=row['ts_code'],
+            name=row['name'],
+            fullname=row['fullname'],
+            market=row['market'],
+            publisher=row['publisher'],
+            index_type=row['index_type'],
+            category=row['category'],
+            base_date=datetime.strptime(row['base_date'], '%Y%m%d').date(),
+            base_point=row['base_point'],
+            list_date=datetime.strptime(row['list_date'], '%Y%m%d').date(),
+            weight_rule=row['weight_rule'],
+            desc=row['desc'],
+            exp_date=row['exp_date']
+        )
+        # 查找有没有ts_code重合的记录
+        if IndexInfo.objects.filter(ts_code=row['ts_code']).exists():
+            # 如果有，跳过这一条记录
+            continue
+        obj.save()
+        counter += 1
+
     final_result = {
-        'progress': f"Task complete, index named {df['fullname'][0]} saved.",
+        'progress': f"Task complete, {counter} new index records saved.",
         'code': 1
     }
     self.update_state(state='SUCCESS', meta=final_result)
