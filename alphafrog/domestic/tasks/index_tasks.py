@@ -20,7 +20,7 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     objects_to_insert = []
     counter = 0
     # print(df)
-    from domestic.models import IndexComponentWeight
+    from ..models.index_models import IndexComponentWeight
 
     for index, row in df.iterrows():
         trade_date_str = row['trade_date']
@@ -86,7 +86,7 @@ def get_index_info(self, ts_code, name):
             self.update_state(state='SUCCESS', meta=final_result)
             return final_result       
 
-    from domestic.models import IndexInfo
+    from ..models.index_models import IndexInfo
 
     # print(df)
 
@@ -129,7 +129,7 @@ def get_index_info(self, ts_code, name):
 @shared_task(bind=True)
 def get_index_daily(self, ts_code, trade_date=None, start_date=None, end_date=None):
     
-    from domestic.models import IndexDaily
+    from ..models.index_models import IndexDaily
 
     if trade_date is not None:
         # 优先使用trade_date获取trade_date当天的数据
