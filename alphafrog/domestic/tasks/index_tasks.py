@@ -22,19 +22,28 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     # print(df)
     from ..models.index_models import IndexComponentWeight
 
+    fetched_stock_ts_code = []
+
     for index, row in df.iterrows():
         trade_date_str = row['trade_date']
         trade_date = datetime.strptime(trade_date_str, '%Y%m%d').date()
 
         # 对每条权重记录，先查看有没有爬取过对应个股的信息
         from ..models.stock_models import StockInfo
-        if not StockInfo.objects.filter(ts_code=row['con_code']).exists():
-            # 爬取个股信息
-            pass
+        if row['con_code'] not in fetched_stock_ts_code:
+            if not StockInfo.objects.filter(ts_code=row['con_code']).exists():
+                # 爬取个股信息，不异步
+                self.update_state(state='PROGRESS', meta={'progress': f"Getting stock info for {row['con_code']}."})
+                from .stock_tasks import get_stock_info
+                get_stock_info(ts_code=row['con_code'], name=None, exchange=None)
+            fetched_stock_ts_code.append(row['con_code'])
 
+
+        stock_obj = StockInfo.objects.get(ts_code=row['con_code'])
         obj = IndexComponentWeight(
             index_code=row['index_code'],
-            con_code=row['con_code'],
+            con_code=stock_obj,
+            con_name=stock_obj.name,
             trade_date=trade_date,
             weight=row['weight']
         )
@@ -45,7 +54,7 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
             IndexComponentWeight.objects.bulk_create(objects_to_insert)
             objects_to_insert.clear()
             counter += 50
-            # print(f'{counter}/{total}')
+            print(f'{counter}/{total}')
             self.update_state(state='PROGRESS', meta={'progress': f'{counter}/{total}'})
     
     if objects_to_insert:
