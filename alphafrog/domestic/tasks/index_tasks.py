@@ -25,6 +25,13 @@ def get_index_components_and_weights(self, index_code, start_date, end_date):
     for index, row in df.iterrows():
         trade_date_str = row['trade_date']
         trade_date = datetime.strptime(trade_date_str, '%Y%m%d').date()
+
+        # 对每条权重记录，先查看有没有爬取过对应个股的信息
+        from ..models.stock_models import StockInfo
+        if not StockInfo.objects.filter(ts_code=row['con_code']).exists():
+            # 爬取个股信息
+            pass
+
         obj = IndexComponentWeight(
             index_code=row['index_code'],
             con_code=row['con_code'],

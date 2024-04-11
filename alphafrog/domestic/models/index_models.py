@@ -45,7 +45,8 @@ class IndexDaily(models.Model):
                 
 class IndexComponentWeight(models.Model):
     index_code = models.CharField(max_length=20)
-    con_code = models.CharField(max_length=20)
+    con_code = models.ForeignKey('StockInfo', on_delete=models.CASCADE)
+    con_name = models.CharField()
     trade_date = models.DateField()
     weight = models.FloatField()
 

@@ -1,5 +1,7 @@
 settings.json
 
 __pycache__/
+sketchs/
+
 
 .DS_Store
