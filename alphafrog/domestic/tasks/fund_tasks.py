@@ -122,3 +122,144 @@ def get_fund_info(self, ts_code, market, status='L'):
         }
         self.update_state(state='SUCCESS', meta=final_result)
         return final_result
+
+
+
+def get_fund_nav_single(self, ts_code, nav_date, start_date, end_date):
+
+    ts.set_token(settings.TUSHARE_TOKEN)
+    pro = ts.pro_api()
+
+    from ..models.fund_models import FundNav
+
+    # 插入时on conflict do nothing
+    if nav_date is not None:
+        # 插入单条记录
+        df = pro.fund_nav(ts_code=ts_code, end_date=nav_date)
+        if not df.empty:
+            row = df.iloc[0]
+            obj = FundNav(
+                ts_code=row['ts_code'],
+                ann_date=None if row['ann_date'] is None else datetime.strptime(row['ann_date'], '%Y%m%d').date(),
+                nav_date=None if row['nav_date'] is None else datetime.strptime(row['nav_date'], '%Y%m%d').date(),
+                unit_nav=row['unit_nav'],
+                accum_nav=row['accum_nav'],
+                accum_div=row['accum_div'],
+                net_asset=row['net_asset'],
+                total_netasset=row['total_netasset'],
+                adj_nav=row['adj_nav'],
+                update_flag=row['update_flag']
+            )
+            FundNav.objects.get_or_create(obj)
+            final_result = {
+                'progress': f"Task complete, fund {ts_code} on {nav_date} saved.",
+                'code': 0
+            }
+            self.update_state(state='SUCCESS', meta=final_result)
+        else:
+            final_result = {
+                'progress': f"Task complete, no data found for {ts_code} on {nav_date}.",
+                'code': -1
+            }
+            self.update_state(state='SUCCESS', meta=final_result)
+        return final_result
+    else:
+        # 获取从start_date到end_date之间的数据
+        df = pro.fund_nav(ts_code=ts_code, start_date=start_date, end_date=end_date)
+
+        if df.empty:
+            final_result = {
+                'progress': f"Task complete, no data found for {ts_code} from {start_date} to {end_date}.",
+                'code': -1
+            }
+            self.update_state(state='SUCCESS', meta=final_result)
+            return final_result
+
+        slice_size = min(max(50, df.shape[0] // 10), 200)
+
+        objects_to_insert = []
+
+        for index, row in df.iterrows():
+            obj = FundNav(
+                ts_code=row['ts_code'],
+                ann_date=None if row['ann_date'] is None else datetime.strptime(row['ann_date'], '%Y%m%d').date(),
+                nav_date=None if row['nav_date'] is None else datetime.strptime(row['nav_date'], '%Y%m%d').date(),
+                unit_nav=row['unit_nav'],
+                accum_nav=row['accum_nav'],
+                accum_div=row['accum_div'],
+                net_asset=row['net_asset'],
+                total_netasset=row['total_netasset'],
+                adj_nav=row['adj_nav'],
+                update_flag=row['update_flag']
+            )
+            objects_to_insert.append(obj)
+
+            if len(objects_to_insert) >= slice_size:
+                FundNav.objects.bulk_create(objects_to_insert)
+                objects_to_insert.clear()
+        
+        if len(objects_to_insert) > 0:
+            FundNav.objects.bulk_create(objects_to_insert)
+        
+        final_result = {
+            'progress': f"Task complete, total {df.shape[0]} records inserted.",
+            'code': 1
+        }
+        self.update_state(state='SUCCESS', meta=final_result)
+        return final_result
+
+
+
+def get_fund_nav_all(self, nav_date, start_date, end_date):
+    
+    ts.set_token(settings.TUSHARE_TOKEN)
+    pro = ts.pro_api()
+
+    from ..models.fund_models import FundNav
+    if nav_date is not None:
+        # 获取nav_date的所有公布的基金净值
+        df = pro.fund_nav(end_date=nav_date)
+    else:
+        # 获取从start_date到end_date的所有基金的公布净值
+        df = pro.fund_nav(start_date=start_date, end_date=end_date)
+    
+    if df.empty:
+        final_result = {
+            'progress': f"Task complete, no data found for {nav_date}.",
+            'code': -1
+        }
+        self.update_state(state='SUCCESS', meta=final_result)
+        return final_result
+    else:
+        slice_size = min(max(50, df.shape[0] // 10), 200)
+
+        objects_to_insert = []
+
+        for index, row in df.iterrows():
+            obj = FundNav(
+                ts_code=row['ts_code'],
+                ann_date=None if row['ann_date'] is None else datetime.strptime(row['ann_date'], '%Y%m%d').date(),
+                nav_date=None if row['nav_date'] is None else datetime.strptime(row['nav_date'], '%Y%m%d').date(),
+                unit_nav=row['unit_nav'],
+                accum_nav=row['accum_nav'],
+                accum_div=row['accum_div'],
+                net_asset=row['net_asset'],
+                total_netasset=row['total_netasset'],
+                adj_nav=row['adj_nav'],
+                update_flag=row['update_flag']
+            )
+            objects_to_insert.append(obj)
+
+            if len(objects_to_insert) >= slice_size:
+                FundNav.objects.bulk_create(objects_to_insert)
+                objects_to_insert.clear()
+        
+        if len(objects_to_insert) > 0:
+            FundNav.objects.bulk_create(objects_to_insert)
+        
+        final_result = {
+            'progress': f"Task complete, total {df.shape[0]} records inserted.",
+            'code': 1
+        }
+        self.update_state(state='SUCCESS', meta=final_result)
+        return final_result
