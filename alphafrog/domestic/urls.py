@@ -14,6 +14,7 @@ urlpatterns = [
     path('stock/fetch-stock-info', stock_fetch_views.fetch_stock_info, name='fetch_stock_info'),
 
     path('fund/fetch-fund-info', fund_fetch_views.fetch_fund_info, name='fetch_fund_info'),
+    path('fund/fetch-fund-nav', fund_fetch_views.fetch_fund_nav, name='fetch_fund_nav'),
 
     path('tasks/check-task-status', index_fetch_views.check_task_status, name='check_task_status'),
 ]

@@ -124,8 +124,8 @@ def get_fund_info(self, ts_code, market, status='L'):
         return final_result
 
 
-
-def get_fund_nav_single(self, ts_code, nav_date, start_date, end_date):
+@shared_task(bind=True)
+def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=None):
 
     ts.set_token(settings.TUSHARE_TOKEN)
     pro = ts.pro_api()
@@ -195,11 +195,12 @@ def get_fund_nav_single(self, ts_code, nav_date, start_date, end_date):
             objects_to_insert.append(obj)
 
             if len(objects_to_insert) >= slice_size:
-                FundNav.objects.bulk_create(objects_to_insert)
+                FundNav.objects.bulk_create(objects_to_insert, ignore_conflicts=True)
                 objects_to_insert.clear()
+                print(f'{index} records inserted.')
         
         if len(objects_to_insert) > 0:
-            FundNav.objects.bulk_create(objects_to_insert)
+            FundNav.objects.bulk_create(objects_to_insert, ignore_conflicts=True)
         
         final_result = {
             'progress': f"Task complete, total {df.shape[0]} records inserted.",
@@ -209,8 +210,8 @@ def get_fund_nav_single(self, ts_code, nav_date, start_date, end_date):
         return final_result
 
 
-
-def get_fund_nav_all(self, nav_date, start_date, end_date):
+@shared_task(bind=True)
+def get_fund_nav_all(self, nav_date=None, start_date=None, end_date=None):
     
     ts.set_token(settings.TUSHARE_TOKEN)
     pro = ts.pro_api()
@@ -218,7 +219,7 @@ def get_fund_nav_all(self, nav_date, start_date, end_date):
     from ..models.fund_models import FundNav
     if nav_date is not None:
         # 获取nav_date的所有公布的基金净值
-        df = pro.fund_nav(end_date=nav_date)
+        df = pro.fund_nav(nav_date=nav_date)
     else:
         # 获取从start_date到end_date的所有基金的公布净值
         df = pro.fund_nav(start_date=start_date, end_date=end_date)
@@ -253,6 +254,7 @@ def get_fund_nav_all(self, nav_date, start_date, end_date):
             if len(objects_to_insert) >= slice_size:
                 FundNav.objects.bulk_create(objects_to_insert)
                 objects_to_insert.clear()
+                print(f'{index} records inserted.')
         
         if len(objects_to_insert) > 0:
             FundNav.objects.bulk_create(objects_to_insert)

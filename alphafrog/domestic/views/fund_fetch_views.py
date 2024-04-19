@@ -56,7 +56,7 @@ def fetch_fund_nav(request):
         else:
             # 则nav_date必须为一个合法的YYYYMMDD字符串，或者说start_date和end_date都是合法的YYYYMMDD字符串
             if nav_date is None and (start_date is None or end_date is None):
-                return JsonResponse({'message': 'ts_code is required'}, status=400)
+                return JsonResponse({'message': 'Date is required'}, status=400)
             if nav_date is not None:
                 try:
                     datetime.strptime(nav_date, '%Y%m%d')
