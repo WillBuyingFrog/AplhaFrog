@@ -19,8 +19,9 @@ def fetch_index_info(request):
         data = json.loads(request.body)
         ts_code = data.get('ts_code')
         name = data.get('name')
+        market = data.get('market')
 
-        task = get_index_info.delay(ts_code, name)
+        task = get_index_info.delay(ts_code, name, market)
 
         return JsonResponse({'task_id': task.id, 'message': 'success'}, status=200)
     else:

@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import index_fetch_views, stock_fetch_views, fund_fetch_views
 from .views import index_user_views
+from .views import cumulated_excess_return_views
 
 urlpatterns = [
     path('index/get-index-info', index_user_views.get_index_info, name='get_index_info'),
@@ -15,6 +16,8 @@ urlpatterns = [
 
     path('fund/fetch-fund-info', fund_fetch_views.fetch_fund_info, name='fetch_fund_info'),
     path('fund/fetch-fund-nav', fund_fetch_views.fetch_fund_nav, name='fetch_fund_nav'),
+
+    path('analysis/cer-fund-indexes', cumulated_excess_return_views.get_cer_fund_indexes, name='get_cer_fund_indexes'),
 
     path('tasks/check-task-status', index_fetch_views.check_task_status, name='check_task_status'),
 ]

@@ -1,6 +1,6 @@
 # fund_tasks.py
 from __future__ import absolute_import, unicode_literals
-from celery import shared_task
+from celery import shared_task, current_task
 from django.conf import settings
 
 import tushare as ts
@@ -125,17 +125,23 @@ def get_fund_info(self, ts_code, market, status='L'):
 
 
 @shared_task(bind=True)
-def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=None):
+def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=None, mode=1):
+
 
     ts.set_token(settings.TUSHARE_TOKEN)
     pro = ts.pro_api()
 
     from ..models.fund_models import FundNav
 
+    final_result = {
+        'progress': "Initializing.",
+        'code': -1
+    }
+
     # 插入时on conflict do nothing
     if nav_date is not None:
         # 插入单条记录
-        df = pro.fund_nav(ts_code=ts_code, end_date=nav_date)
+        df = pro.fund_nav(ts_code=ts_code, nav_date=nav_date)
         if not df.empty:
             row = df.iloc[0]
             obj = FundNav(
@@ -150,19 +156,24 @@ def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=
                 adj_nav=row['adj_nav'],
                 update_flag=row['update_flag']
             )
-            FundNav.objects.get_or_create(obj)
-            final_result = {
-                'progress': f"Task complete, fund {ts_code} on {nav_date} saved.",
-                'code': 0
-            }
-            self.update_state(state='SUCCESS', meta=final_result)
+            if mode == 1:
+                # 模式1，保存到数据库，并记录任务完成的信息
+                FundNav.objects.get_or_create(obj)
+                final_result['progress'] = f"Task complete, fund {ts_code} on {nav_date} saved."
+                final_result['code'] = 0
+                self.update_state(state='SUCCESS', meta=final_result)
+            elif mode == 2:
+                # 如果不需要存储到数据库中，则返回从tushare获取的净值数据
+                final_result['progress'] = f"Task complete, fund {ts_code} on {nav_date} fetched."
+                final_result['code'] = 0
+                final_result['data'] = obj
+                return final_result
         else:
-            final_result = {
-                'progress': f"Task complete, no data found for {ts_code} on {nav_date}.",
-                'code': -1
-            }
+            final_result['progress'] = f"Task complete, no data found for {ts_code} on {nav_date}."
+            final_result['code'] = 0
             self.update_state(state='SUCCESS', meta=final_result)
         return final_result
+
     else:
         # 获取从start_date到end_date之间的数据
         df = pro.fund_nav(ts_code=ts_code, start_date=start_date, end_date=end_date)
@@ -172,7 +183,8 @@ def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=
                 'progress': f"Task complete, no data found for {ts_code} from {start_date} to {end_date}.",
                 'code': -1
             }
-            self.update_state(state='SUCCESS', meta=final_result)
+            if mode == 1 and current_task and (not current_task.request.called_directly):
+                self.update_state(state='SUCCESS', meta=final_result)
             return final_result
 
         slice_size = min(max(50, df.shape[0] // 10), 200)
@@ -194,20 +206,30 @@ def get_fund_nav_single(self, ts_code, nav_date=None, start_date=None, end_date=
             )
             objects_to_insert.append(obj)
 
-            if len(objects_to_insert) >= slice_size:
+            if mode == 1:
+                # 如果要将tushare爬取到的数据保存到数据库中，则这里需要分块保存
+                if len(objects_to_insert) >= slice_size:
+                    FundNav.objects.bulk_create(objects_to_insert, ignore_conflicts=True)
+                    objects_to_insert.clear()
+                    print(f'{index} records inserted.')
+
+        if mode == 1:
+            # 如果要将tushare爬取到的数据保存到数据库中，则这里需要保存剩余的数据
+            if len(objects_to_insert) > 0:
                 FundNav.objects.bulk_create(objects_to_insert, ignore_conflicts=True)
-                objects_to_insert.clear()
-                print(f'{index} records inserted.')
-        
-        if len(objects_to_insert) > 0:
-            FundNav.objects.bulk_create(objects_to_insert, ignore_conflicts=True)
-        
-        final_result = {
-            'progress': f"Task complete, total {df.shape[0]} records inserted.",
-            'code': 1
-        }
-        self.update_state(state='SUCCESS', meta=final_result)
-        return final_result
+            final_result = {
+                'progress': f"Task complete, total {df.shape[0]} records inserted.",
+                'code': 1
+            }
+            if current_task and (not current_task.request.called_directly):
+                self.update_state(state='SUCCESS', meta=final_result)
+            return final_result
+        elif mode == 2:
+            # 如果不需要保存到数据库中，则直接返回从tushare获取的数据
+            final_result['progress'] = f"Task complete, total {df.shape[0]} records fetched."
+            final_result['code'] = 0
+            final_result['data'] = objects_to_insert
+            return final_result
 
 
 @shared_task(bind=True)
