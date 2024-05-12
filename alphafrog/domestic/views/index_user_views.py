@@ -5,9 +5,9 @@ from ..models.index_models import IndexInfo, IndexDaily, IndexComponentWeight
 
 
 def get_index_info(request):
+    # 从当前数据库中所有已爬取的指数信息中，获取第page页的指数
     if request.method == 'GET':
-        data = json.loads(request.body)
-        page = data.get('page')
+        page = request.GET.get('page', 1)
 
         # 获取第(page-1)*10到page*10条数据
         start = (int(page) - 1) * 10
@@ -33,7 +33,42 @@ def get_index_info(request):
         return JsonResponse({'data': data, 'message': 'success'}, status=200)
     else:
         return JsonResponse({'message': 'Invalid request'}, status=400)
-    
+
+
+def search_index_info(request):
+    if request.method == 'GET':
+        keyword = request.GET.get('keyword')
+        page = request.GET.get('page', 1)
+
+        # 进行模糊查询
+        # 简称查询
+        name_query = IndexInfo.objects.filter(name__contains=keyword)
+        # 全称查询
+        fullname_query = IndexInfo.objects.filter(fullname__contains=keyword)
+        # 指数代码查询
+        ts_code_query = IndexInfo.objects.filter(ts_code__contains=keyword)
+
+        # 合并查询结果并去重
+        index_info = name_query | fullname_query | ts_code_query
+        index_info = index_info.distinct()
+
+        # 计算返回数据起止下标
+        start = (int(page) - 1) * 10
+        end = min(int(page) * 10, len(index_info))
+
+        # 构建返回的数据列表
+        data = [
+            {
+                'ts_code': index.ts_code,
+                'name': index.name,
+                'fullname': index.fullname,
+            }
+            for index in index_info[start:end]
+        ]
+
+        return JsonResponse({'data': data, 'message': 'success'}, status=200)
+    else:
+        return JsonResponse({'message': 'Invalid request'}, status=400)
 
 def get_index_components_weights(request):
     if request.method == 'GET':

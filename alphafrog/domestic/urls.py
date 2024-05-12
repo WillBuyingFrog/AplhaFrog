@@ -5,6 +5,7 @@ from .views import cumulated_excess_return_views
 
 urlpatterns = [
     path('index/get-index-info', index_user_views.get_index_info, name='get_index_info'),
+    path('index/search-index-info', index_user_views.search_index_info, name='search_index_info'),
 
 
     # path('index/get-weights-old', views.get_weights_old, name='get_weights_old'),
