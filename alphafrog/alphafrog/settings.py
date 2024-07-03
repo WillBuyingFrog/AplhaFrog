@@ -52,7 +52,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "domestic"
+    "domestic",
+    "alpha_record"
 ]
 
 MIDDLEWARE = [
@@ -99,8 +100,14 @@ DATABASES = {
         'PASSWORD': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['password'],
         'HOST': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['host'],
         'PORT': get_secrets('sql', index=ALPHAFROG_DATABASE_INDEX)['port'],
+    },
+    'sqlite3': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
     }
 }
+
+DATABASE_ROUTERS = ['db_router.DatabaseRouter']
 
 
 # Password validation
