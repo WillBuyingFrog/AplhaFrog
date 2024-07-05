@@ -167,3 +167,8 @@ CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 # AlphaFrog custom settings
 
 TUSHARE_TOKEN = get_secrets('tushare.token')
+
+PRIMARY_VLM = get_secrets('llms')['primary_vlm']
+FIREWORKS_API_KEY = get_secrets('llms')['fireworks.api_key']
+OPENROUTER_API_KEY = get_secrets('llms')['openrouter.api_key']
+DASHSCOPE_API_KEY = get_secrets('llms')['dashscope.api_key']
