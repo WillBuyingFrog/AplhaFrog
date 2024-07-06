@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "domestic",
-    "alpha_record"
+    "alpharecord"
 ]
 
 MIDDLEWARE = [

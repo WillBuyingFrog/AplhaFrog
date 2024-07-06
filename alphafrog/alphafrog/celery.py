@@ -18,7 +18,7 @@ task_modules = [
     'domestic.tasks.index_tasks',
     'domestic.tasks.stock_tasks',
     'domestic.tasks.fund_tasks',
-    'alpha_record.tasks.create_record_tasks',
+    'alpharecord.tasks.create_record_tasks',
 ]
 
 # Load task modules from all registered Django apps.
