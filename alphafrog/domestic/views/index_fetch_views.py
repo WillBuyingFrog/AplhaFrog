@@ -70,11 +70,9 @@ def fetch_index_daily(request):
 
 def check_task_status(request):
     if request.method == 'GET':
-
-        data = json.loads(request.body)
-        task_id = data.get('task_id')
+        task_id = request.GET.get('task_id')
         task = AsyncResult(task_id)
-        print(task.info)
+        # print(task.info)
         result = {
             'state': task.state,
             'result': task.result

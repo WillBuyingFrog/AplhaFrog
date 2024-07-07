@@ -70,7 +70,7 @@ def match_fund_name_with_name_and_code(fund_name):
 
 
 @shared_task(bind=True)
-def create_records_from_local_images(self):
+def create_records_from_local_images(self, sub_dir=None):
     # 从resources/alpharecord/prompts/get_fund_transaction_info.txt中加载prompt
     with open('resources/alpharecord/prompts/get_fund_transaction_info.txt', 'r') as prompt_file:
         prompt = prompt_file.read()
@@ -95,7 +95,13 @@ def create_records_from_local_images(self):
 
     # 默认需要处理的图片都在resources/temp/alpharecord/upload下
     # 遍历这个目录下的图片
-    for root, dirs, files in os.walk('resources/temp/alpharecord/upload'):
+
+    if sub_dir is not None:
+        images_dir = os.path.join('resources/temp/alpharecord/upload', sub_dir)
+    else:
+        images_dir = 'resources/temp/alpharecord/upload'
+
+    for root, dirs, files in os.walk(images_dir):
         for file in files:
             image_path = os.path.join(root, file)
             image_base64 = encode_image(image_path)
@@ -116,7 +122,7 @@ def create_records_from_local_images(self):
                 }],
                 temperature=0
             )
-            # print(f"测试响应：{response.choices[0].message.content}")
+            print(f"测试响应：{response.choices[0].message.content}")
             transaction_dict = parse_fund_purchase_info(response.choices[0].message.content)
             # print(transaction_dict)
             fund_database_name, ts_code = match_fund_name_with_name_and_code(transaction_dict['fund_name'])

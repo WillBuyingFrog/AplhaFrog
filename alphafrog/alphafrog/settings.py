@@ -40,8 +40,12 @@ SECRET_KEY = "django-insecure-(6uuacz!8oej(7okcwur4qvtj(mwe^=bqs(-svlb9p9eo9sy#u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 # Application definition
 
@@ -52,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'corsheaders',
     "domestic",
     "alpharecord"
 ]
@@ -59,6 +64,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -172,3 +178,5 @@ PRIMARY_VLM = get_secrets('llms')['primary_vlm']
 FIREWORKS_API_KEY = get_secrets('llms')['fireworks.api_key']
 OPENROUTER_API_KEY = get_secrets('llms')['openrouter.api_key']
 DASHSCOPE_API_KEY = get_secrets('llms')['dashscope.api_key']
+
+ALPHA_RECORD_TEMP_MEDIA_ROOT = os.path.join(BASE_DIR, "resources/temp/alpharecord/upload/")
