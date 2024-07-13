@@ -18,8 +18,9 @@ def fetch_fund_info(request):
         ts_code = data.get('ts_code')
         market = data.get('market')
         status = data.get('status')
+        offset = data.get('offset')
 
-        task = get_fund_info.delay(ts_code, market, status)
+        task = get_fund_info.delay(ts_code, market, status, offset)
 
         return JsonResponse({'task_id': task.id, 'message': 'success'}, status=200)
     else:

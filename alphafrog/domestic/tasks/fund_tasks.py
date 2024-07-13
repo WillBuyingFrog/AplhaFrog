@@ -8,7 +8,7 @@ from datetime import datetime
 
 
 @shared_task(bind=True)
-def get_fund_info(self, ts_code, market, status='L'):
+def get_fund_info(self, ts_code, market, status='L', offset=0):
 
     ts.set_token(settings.TUSHARE_TOKEN)
     pro = ts.pro_api()
@@ -71,7 +71,7 @@ def get_fund_info(self, ts_code, market, status='L'):
             return final_result
     else:
         # 没有传入ts_code，按照market和status爬取
-        df = pro.fund_basic(market=market, status=status)
+        df = pro.fund_basic(market=market, status=status, offset=offset)
 
         slice_size = min(max(50, df.shape[0] // 10), 200)
 
@@ -108,12 +108,12 @@ def get_fund_info(self, ts_code, market, status='L'):
             objects_to_create.append(obj)
 
             if len(objects_to_create) == slice_size:
-                FundInfo.objects.bulk_create(objects_to_create)
+                FundInfo.objects.bulk_create(objects_to_create, ignore_conflicts=True)
                 objects_to_create = []
                 print(f'{index} records inserted.')
 
         if len(objects_to_create) > 0:
-            FundInfo.objects.bulk_create(objects_to_create)
+            FundInfo.objects.bulk_create(objects_to_create, ignore_conflicts=True)
             print(f'{len(objects_to_create)} records inserted.')
         
         final_result = {

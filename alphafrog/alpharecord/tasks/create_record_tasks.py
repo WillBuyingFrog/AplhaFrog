@@ -51,15 +51,43 @@ def match_fund_name_with_name_and_code(fund_name):
     if not matched_fund:
         return None, None
 
+    # 输出搜索结果
+    # for fund in matched_fund:
+    #     print(f"Found fund: {fund.name}, similarity: {fund.similarity}")
+
     # 取前两个搜索结果
     first_match = matched_fund.first()
     second_match = matched_fund[1]
 
-    # 若第一个搜索结果的最后一个字符（一般指示基金份额）和fund_name的最后一个字符相符，则直接返回这个基金的名称和代码
-    if first_match.name[-1] == fund_name[-1]:
+    print(f"first match: {first_match.name}, second_match: {second_match.name}")
+
+    # 提取出first_match.name从最后开始往前数第一个英文字符
+    first_match_last_char = ''
+    for i in range(len(first_match.name) - 1, -1, -1):
+        if 'A' <= first_match.name[i] <= 'Z':
+            first_match_last_char = first_match.name[i]
+            break
+    # 提取出second_match.name从最后开始往前数第一个英文字符
+    second_match_last_char = ''
+    for i in range(len(second_match.name) - 1, -1, -1):
+        if 'A' <= second_match.name[i] <= 'Z':
+            second_match_last_char = second_match.name[i]
+            break
+
+    # 提取出fund_name从最后开始往前数第一个英文字符
+    fund_name_last_char = ''
+    for i in range(len(fund_name) - 1, -1, -1):
+        if 'A' <= fund_name[i] <= 'Z':
+            fund_name_last_char = fund_name[i]
+            break
+
+    print(f"Last alphabet for first_natch, second_match and fund_name: {first_match_last_char}, {second_match_last_char}, {fund_name_last_char}")
+
+    # 若第一个搜索结果的最后一个英文字符（一般指示基金份额）和fund_name的最后一个英文字符相符，则直接返回这个基金的名称和代码
+    if first_match_last_char == fund_name_last_char:
         return first_match.name, first_match.ts_code
     # 第二个同理
-    elif second_match.name[-1] == fund_name[-1]:
+    elif second_match_last_char == fund_name_last_char:
         return second_match.name, second_match.ts_code
 
     # 默认返回第一个
@@ -80,7 +108,7 @@ def create_records_from_local_images(self, sub_dir=None):
     if primary_vlm == 'qwen-vl-max' or primary_vlm == 'qwen-vl-plus':
         vlm_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
         vlm_api_key = settings.DASHSCOPE_API_KEY
-        model_name = "qwen-vl-max"
+        model_name = primary_vlm
     else:
         vlm_base_url = "https://openrouter.ai/api/v1"
         vlm_api_key = settings.OPENROUTER_API_KEY
@@ -101,8 +129,16 @@ def create_records_from_local_images(self, sub_dir=None):
     else:
         images_dir = 'resources/temp/alpharecord/upload'
 
+    counter = 0
+
     for root, dirs, files in os.walk(images_dir):
         for file in files:
+            counter += 1
+            task_result = {
+                'progress': f"正在处理第{counter}张",
+                'code': 0
+            }
+            self.update_state(state='PROGRESS', meta=task_result)
             image_path = os.path.join(root, file)
             image_base64 = encode_image(image_path)
             print(f"正在处理图片：{image_path}")
@@ -126,8 +162,7 @@ def create_records_from_local_images(self, sub_dir=None):
             transaction_dict = parse_fund_purchase_info(response.choices[0].message.content)
             # print(transaction_dict)
             fund_database_name, ts_code = match_fund_name_with_name_and_code(transaction_dict['fund_name'])
-            # 要把交易时间改成兼容PostgreSQL的DateField的格式，要保留时分秒
-            transaction_dict['time'] = datetime.strptime(transaction_dict['time'], '%Y/%m/%d %H:%M:%S').date()
+            # transaction_dict['time'] = datetime.strptime(transaction_dict['time'], '%Y/%m/%d %H:%M:%S')
             print(f"匹配到的基金名称：{fund_database_name}，基金代码：{ts_code}")
             if ts_code:
                 transaction_dict['fund_database_name'] = fund_database_name
@@ -142,11 +177,6 @@ def create_records_from_local_images(self, sub_dir=None):
                 return task_result
 
 
-            task_result = {
-                'progress': f"Processed image {image_path}",
-                'code': 0
-            }
-            self.update_state(state='PROGRESS', meta=task_result)
 
     task_result = {
         'progress': 'All images processed',
