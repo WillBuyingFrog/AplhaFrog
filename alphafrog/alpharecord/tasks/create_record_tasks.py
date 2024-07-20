@@ -23,7 +23,7 @@ def parse_fund_purchase_info(input_string):
     # 初始化字典
     result = {}
     # 定义字典的键
-    keys = ["amount", "time", "invest_nav", "invest_shares", "invest_fee", "fund_name"]
+    keys = ["amount", "time", "nav", "shares", "fee", "fund_name", "type"]
 
     for line in lines:
         # 分割每一行内容，获取键和值
@@ -33,6 +33,17 @@ def parse_fund_purchase_info(input_string):
         # 将数值字符串转换为浮点数，时间和基金名称保持字符串格式
         if dict_key == "time" or dict_key == "fund_name":
             result[dict_key] = value
+        elif dict_key == "type":
+            if value == "买入":
+                result[dict_key] = "buy"
+            elif value == "卖出":
+                result[dict_key] = "sell"
+            elif value == "定投":
+                result[dict_key] = "auto_invest"
+            elif value == "分红":
+                result[dict_key] = "dividend"
+            else:
+                result[dict_key] = "none"
         else:
             result[dict_key] = float(value)
     return result
