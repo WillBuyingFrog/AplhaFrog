@@ -178,6 +178,9 @@ def create_records_from_local_images(self, sub_dir=None):
             if ts_code:
                 transaction_dict['fund_database_name'] = fund_database_name
                 transaction_dict['ts_code'] = ts_code
+                # 基金购买平台需要用户自己补充
+                transaction_dict['platform'] = "none"
+                transaction_dict['index'] = counter
                 transaction_results.append(transaction_dict)
             else:
                 task_result = {

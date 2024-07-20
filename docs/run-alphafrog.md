@@ -13,5 +13,5 @@ celery -A alphafrog worker -l info
 
 在`root_of_project`目录下执行：
 ```shell
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8000*
 ```
