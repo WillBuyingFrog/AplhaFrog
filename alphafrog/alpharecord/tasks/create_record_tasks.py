@@ -27,7 +27,7 @@ def parse_fund_purchase_info(input_string):
 
     for line in lines:
         # 分割每一行内容，获取键和值
-        key, value = line.split('-')
+        key, value = line.split('#')
         # 将键转换为对应的字典键
         dict_key = keys[int(key) - 1]
         # 将数值字符串转换为浮点数，时间和基金名称保持字符串格式
@@ -119,11 +119,11 @@ def create_records_from_local_images(self, sub_dir=None):
     if primary_vlm == 'qwen-vl-max' or primary_vlm == 'qwen-vl-plus':
         vlm_base_url = "https://dashscope.aliyuncs.com/compatible-mode/v1"
         vlm_api_key = settings.DASHSCOPE_API_KEY
-        model_name = primary_vlm
     else:
         vlm_base_url = "https://openrouter.ai/api/v1"
         vlm_api_key = settings.OPENROUTER_API_KEY
-        model_name = "openai/gpt-4o"
+
+    model_name = primary_vlm
 
     client = openai.OpenAI(
         base_url=vlm_base_url,
@@ -179,7 +179,7 @@ def create_records_from_local_images(self, sub_dir=None):
                 transaction_dict['fund_database_name'] = fund_database_name
                 transaction_dict['ts_code'] = ts_code
                 # 基金购买平台需要用户自己补充
-                transaction_dict['platform'] = "none"
+                transaction_dict['platform'] = ""
                 transaction_dict['index'] = counter
                 transaction_results.append(transaction_dict)
             else:
