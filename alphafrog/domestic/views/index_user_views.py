@@ -40,6 +40,10 @@ def search_index_info(request):
         keyword = request.GET.get('keyword')
         page = request.GET.get('page', 1)
 
+        # 如果keyword的长度小于2，直接返回报错
+        if len(keyword) < 2:
+            return JsonResponse({'message': 'Keyword too short'}, status=400)
+
         # 进行模糊查询
         # 简称查询
         name_query = IndexInfo.objects.filter(name__contains=keyword)
